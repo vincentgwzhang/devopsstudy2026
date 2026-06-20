@@ -1,0 +1,33 @@
+services:
+  loki:
+    image: grafana/loki:latest
+    container_name: devopsstudy-loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: devopsstudy-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Admin
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+    volumes:
+      - ./grafana-datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - loki
+    restart: unless-stopped
+
+  fluent-bit:
+    image: fluent/fluent-bit:latest
+    container_name: devopsstudy-fluent-bit
+    volumes:
+      - ./fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf:ro
+      - ../logs:/logs:ro
+    depends_on:
+      - loki
+    restart: unless-stopped
