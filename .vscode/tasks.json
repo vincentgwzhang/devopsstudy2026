@@ -18,6 +18,22 @@
             }
         },
         {
+            "label": "prometheus: up",
+            "type": "shell",
+            "command": "docker compose -f support/prometheus.yaml up -d",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated",
+                "clear": false
+            }
+        },
+        {
             "label": "verify: full service chain",
             "type": "shell",
             "command": "${workspaceFolder}/support/verify-chain.sh",

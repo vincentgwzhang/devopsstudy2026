@@ -5,6 +5,8 @@ import java.time.Instant;
 import java.util.UUID;
 import java.util.random.RandomGenerator;
 
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -15,13 +17,20 @@ import org.springframework.web.client.RestClient;
 class OrderController {
 
     private final RestClient paymentClient;
+    private final Counter createOrderCounter;
 
-    OrderController(RestClient paymentClient) {
+    OrderController(RestClient paymentClient, MeterRegistry meterRegistry) {
         this.paymentClient = paymentClient;
+        this.createOrderCounter = Counter.builder("order_controller_create")
+                .description("Total number of create order endpoint calls")
+                .tag("endpoint", "POST /orders")
+                .register(meterRegistry);
     }
 
     @PostMapping(value = "/orders", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     OrderResponse createOrder(@RequestBody OrderRequest request) throws InterruptedException {
+        createOrderCounter.increment();
+
         int jitterMs = RandomGenerator.getDefault().nextInt(120, 900);
         Thread.sleep(jitterMs);
 
