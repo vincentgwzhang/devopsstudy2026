@@ -2,6 +2,22 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "zipkin: up",
+            "type": "shell",
+            "command": "docker compose -f support/zipkin.yaml up -d",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated",
+                "clear": false
+            }
+        },
+        {
             "label": "verify: full service chain",
             "type": "shell",
             "command": "${workspaceFolder}/support/verify-chain.sh",

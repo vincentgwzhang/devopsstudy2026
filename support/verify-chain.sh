@@ -99,5 +99,25 @@ assert_log PaymentService "PaymentService received a calling"
 assert_log BankService "BankService received a calling"
 
 echo
+echo "Checking Zipkin API..."
+sleep 1
+if curl -fsS "http://localhost:9411/api/v2/services" > "$LOG_DIR/zipkin-services.json"; then
+    if grep -E 'GatewayService|OrderService|PaymentService|BankService' "$LOG_DIR/zipkin-services.json" >/dev/null; then
+        echo "Zipkin received traces:"
+        cat "$LOG_DIR/zipkin-services.json"
+        echo
+    else
+        echo "Zipkin is reachable, but expected service names are not present yet."
+        cat "$LOG_DIR/zipkin-services.json"
+        echo
+        exit 1
+    fi
+else
+    echo "Zipkin is not reachable at http://localhost:9411. Start it with:"
+    echo "docker compose -f support/zipkin.yaml up -d"
+    exit 1
+fi
+
+echo
 echo "Trace log check passed. Logs are in support/logs:"
 ls -1 "$LOG_DIR"
