@@ -1,0 +1,130 @@
+{
+  "info": {
+    "_postman_id": "77da6f37-f109-445c-9b25-3e56a64663ef",
+    "name": "devopsstudy direct HTTP chain",
+    "description": "GatewayService routes to OrderService. OrderService calls PaymentService. PaymentService calls BankService. Order, Payment, and Bank endpoints include random network jitter.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Order through Gateway",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": \"customer-1001\",\n  \"amount\": 68.80,\n  \"currency\": \"USD\"\n}"
+        },
+        "url": {
+          "raw": "{{gatewayUrl}}/orders",
+          "host": [
+            "{{gatewayUrl}}"
+          ],
+          "path": [
+            "orders"
+          ]
+        },
+        "description": "Call this after starting all four services. The request flows GatewayService -> OrderService -> PaymentService -> BankService."
+      }
+    },
+    {
+      "name": "Create Order direct",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": \"customer-1001\",\n  \"amount\": 68.80,\n  \"currency\": \"USD\"\n}"
+        },
+        "url": {
+          "raw": "{{orderUrl}}/orders",
+          "host": [
+            "{{orderUrl}}"
+          ],
+          "path": [
+            "orders"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Authorize Payment direct",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"orderId\": \"ord-demo\",\n  \"customerId\": \"customer-1001\",\n  \"amount\": 68.80,\n  \"currency\": \"USD\"\n}"
+        },
+        "url": {
+          "raw": "{{paymentUrl}}/payments",
+          "host": [
+            "{{paymentUrl}}"
+          ],
+          "path": [
+            "payments"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Bank Transfer direct",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"customerId\": \"customer-1001\",\n  \"orderId\": \"ord-demo\",\n  \"amount\": 68.80,\n  \"currency\": \"USD\"\n}"
+        },
+        "url": {
+          "raw": "{{bankUrl}}/bank/transfers",
+          "host": [
+            "{{bankUrl}}"
+          ],
+          "path": [
+            "bank",
+            "transfers"
+          ]
+        }
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "gatewayUrl",
+      "value": "http://localhost:8080"
+    },
+    {
+      "key": "orderUrl",
+      "value": "http://localhost:8081"
+    },
+    {
+      "key": "paymentUrl",
+      "value": "http://localhost:8082"
+    },
+    {
+      "key": "bankUrl",
+      "value": "http://localhost:8083"
+    }
+  ]
+}

@@ -1,0 +1,9 @@
+{
+    "java.configuration.updateBuildConfiguration": "automatic",
+    "java.import.maven.enabled": true,
+    "java.project.sourcePaths": [],
+    "files.exclude": {
+        "**/target": true
+    },
+    "java.compile.nullAnalysis.mode": "automatic"
+}

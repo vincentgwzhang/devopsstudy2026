@@ -1,0 +1,24 @@
+# Maven build output
+target/
+**/target/
+
+# Logs
+*.log
+logs/
+**/logs/
+
+# Java runtime dumps
+hs_err_pid*
+replay_pid*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Keep shared VS Code project settings in Git.
+!.vscode/
+!.vscode/settings.json
+
+# Ignore personal VS Code files if they appear later.
+.vscode/*
+!.vscode/settings.json
