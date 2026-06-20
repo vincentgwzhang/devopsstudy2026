@@ -236,6 +236,84 @@ up
 
 如果 `otel-collector` 返回 `1`，表示 Prometheus 已经成功 scrape Collector。
 
+## 常用 Metrics 查询
+
+因为这个 branch 使用了 OpenTelemetry Collector，所以 Prometheus 的 `up` 只会显示 Collector 是否可用：
+
+```promql
+up
+```
+
+你不会在 `up` 里直接看到：
+
+```text
+GatewayService
+OrderService
+PaymentService
+BankService
+```
+
+如果要查某一个 service 的 metrics，需要用 service 自己带上的 label。最推荐使用 `application`：
+
+```promql
+{application="GatewayService"}
+{application="OrderService"}
+{application="PaymentService"}
+{application="BankService"}
+```
+
+也可以使用 Collector 导出时保留的 `exported_job`：
+
+```promql
+{exported_job="GatewayService"}
+{exported_job="OrderService"}
+{exported_job="PaymentService"}
+{exported_job="BankService"}
+```
+
+推荐优先使用 `application`，因为它来自每个 service 的 `application.yml`：
+
+```yaml
+management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
+```
+
+查看某个 service 的 JVM memory metrics：
+
+```promql
+jvm_memory_used_bytes{application="OrderService"}
+jvm_memory_used_bytes{application="BankService"}
+```
+
+查看某个 service 的 HTTP server 请求统计：
+
+```promql
+http_server_requests_seconds_count{application="GatewayService"}
+http_server_requests_seconds_count{application="OrderService"}
+```
+
+查看某个 service 的 JVM thread 数量：
+
+```promql
+jvm_threads_live_threads{application="PaymentService"}
+```
+
+查看某个 service 的进程启动时间：
+
+```promql
+process_start_time_seconds{application="BankService"}
+```
+
+查看某个 service 所有可用 metric 名称时，可以先查询：
+
+```promql
+{application="BankService"}
+```
+
+然后在结果里观察具体 metric name。
+
 ## OrderService 自定义 Counter
 
 这个 branch 在 `OrderService` 里保留了自定义 counter：
