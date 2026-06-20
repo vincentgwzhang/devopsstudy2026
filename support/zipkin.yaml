@@ -7,3 +7,17 @@ services:
     environment:
       STORAGE_TYPE: mem
     restart: unless-stopped
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    container_name: devopsstudy-otel-collector
+    command:
+      - --config=/etc/otelcol-contrib/otel-collector.yaml
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - ./otel-collector.yaml:/etc/otelcol-contrib/otel-collector.yaml:ro
+    depends_on:
+      - zipkin
+    restart: unless-stopped

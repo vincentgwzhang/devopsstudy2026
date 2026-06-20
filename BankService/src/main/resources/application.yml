@@ -17,5 +17,11 @@ management:
     sampling:
       probability: 1.0
     export:
-      zipkin:
-        endpoint: http://localhost:9411/api/v2/spans
+      otlp:
+        enabled: true
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: http://localhost:4318/v1/traces
+          transport: http
