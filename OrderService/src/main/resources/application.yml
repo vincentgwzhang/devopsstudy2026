@@ -2,8 +2,20 @@ server:
   port: 8081
 
 spring:
+  main:
+    banner-mode: "off"
   application:
     name: OrderService
+
+logging:
+  level:
+    root: WARN
+    com.observe.order: INFO
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
 
 services:
   payment:

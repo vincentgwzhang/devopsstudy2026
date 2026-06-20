@@ -18,7 +18,9 @@ Thumbs.db
 # Keep shared VS Code project settings in Git.
 !.vscode/
 !.vscode/settings.json
+!.vscode/tasks.json
 
 # Ignore personal VS Code files if they appear later.
 .vscode/*
 !.vscode/settings.json
+!.vscode/tasks.json

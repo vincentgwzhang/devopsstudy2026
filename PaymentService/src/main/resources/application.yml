@@ -2,8 +2,20 @@ server:
   port: 8082
 
 spring:
+  main:
+    banner-mode: "off"
   application:
     name: PaymentService
+
+logging:
+  level:
+    root: WARN
+    com.observe.payment: INFO
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
 
 services:
   bank:

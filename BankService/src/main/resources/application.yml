@@ -2,5 +2,17 @@ server:
   port: 8083
 
 spring:
+  main:
+    banner-mode: "off"
   application:
     name: BankService
+
+logging:
+  level:
+    root: WARN
+    com.observe.bank: INFO
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0

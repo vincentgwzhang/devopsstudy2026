@@ -13,6 +13,7 @@
     <description>Spring Boot and Spring Cloud direct HTTP call study</description>
 
     <modules>
+        <module>CommonModule</module>
         <module>GatewayService</module>
         <module>OrderService</module>
         <module>PaymentService</module>
@@ -29,6 +30,11 @@
 
     <dependencyManagement>
         <dependencies>
+            <dependency>
+                <groupId>com.observe</groupId>
+                <artifactId>CommonModule</artifactId>
+                <version>${project.version}</version>
+            </dependency>
             <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
