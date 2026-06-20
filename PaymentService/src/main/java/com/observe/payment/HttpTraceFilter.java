@@ -28,9 +28,12 @@ class HttpTraceFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        try (var ignored = MdcSupport.openSpan(tracerProvider.getIfAvailable(), "PaymentService received request")) {
+        try {
+            MdcSupport.enrichFromTracer(tracerProvider.getIfAvailable());
             log.info("PaymentService received a calling");
             filterChain.doFilter(request, response);
+        } finally {
+            MdcSupport.clear();
         }
     }
 }

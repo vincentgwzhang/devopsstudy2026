@@ -27,12 +27,12 @@ class GatewayTraceFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         return Mono.defer(() -> {
-            var traceScope = MdcSupport.openSpan(tracerProvider.getIfAvailable(), "GatewayService forwarding request");
+            MdcSupport.enrichFromTracer(tracerProvider.getIfAvailable());
             log.info("GatewayService forwarding request with traceId={} spanId={}",
                     MdcSupport.traceId().orElse("-"),
                     MdcSupport.spanId().orElse("-"));
             return chain.filter(exchange)
-                    .doFinally(signalType -> traceScope.close());
+                    .doFinally(signalType -> MdcSupport.clear());
         });
     }
 
