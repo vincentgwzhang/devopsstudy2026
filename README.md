@@ -219,6 +219,31 @@ gatewayservice
 
 ```text
 App -> OTLP -> OpenTelemetry Collector -> Trace Backend
+
+
+OTEL 能转发到多个channel, 如:
+
+Zipkin
+Jaeger
+Grafana Tempo
+Elastic APM / Elasticsearch
+Datadog
+New Relic
+Honeycomb
+Dynatrace
+AWS X-Ray
+Google Cloud Trace
+Azure Monitor
+Splunk Observability
+Prometheus / remote write, 主要是 metrics
+Loki, 主要是 logs
+Kafka, 作为中间管道
+OTLP-compatible backend
 ```
 
 在这个 branch 里，Trace Backend 是 Zipkin。以后如果要换成 Tempo 或 Jaeger，理论上应该主要修改 Collector 配置，而不是每个 microservice 的业务代码。
+
+现在这个branch 支持  
+
+Jaeger: http://localhost:16686
+Zipkin: http://localhost:9411

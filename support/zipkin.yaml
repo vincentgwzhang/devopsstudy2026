@@ -8,6 +8,15 @@ services:
       STORAGE_TYPE: mem
     restart: unless-stopped
 
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: devopsstudy-jaeger
+    ports:
+      - "16686:16686"
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    restart: unless-stopped
+
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
     container_name: devopsstudy-otel-collector
@@ -20,4 +29,5 @@ services:
       - ./otel-collector.yaml:/etc/otelcol-contrib/otel-collector.yaml:ro
     depends_on:
       - zipkin
+      - jaeger
     restart: unless-stopped
