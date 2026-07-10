@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DevOps Observability 方案总结</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #667085;
+      --line: #d9dee7;
+      --accent: #0f766e;
+      --accent-soft: #e8f5f3;
+      --code: #101828;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif;
+      line-height: 1.75;
+    }
+
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 40px 22px 64px;
+    }
+
+    header {
+      padding: 28px 0 26px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(30px, 5vw, 44px);
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 34px 0 14px;
+      font-size: 25px;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 24px 0 10px;
+      font-size: 19px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 10px 0;
+    }
+
+    ul, ol {
+      padding-left: 24px;
+    }
+
+    li {
+      margin: 8px 0;
+    }
+
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+
+    code {
+      color: var(--code);
+      background: #eef2f6;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    pre {
+      overflow-x: auto;
+      background: #111827;
+      color: #f9fafb;
+      padding: 16px;
+      border-radius: 8px;
+      line-height: 1.55;
+    }
+
+    pre code {
+      padding: 0;
+      background: transparent;
+      color: inherit;
+    }
+
+    .lead {
+      max-width: 820px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 24px;
+      margin: 22px 0;
+    }
+
+    .tag {
+      display: inline-block;
+      margin-right: 8px;
+      margin-bottom: 8px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .note {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-soft);
+      padding: 12px 14px;
+      margin: 16px 0;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      background: #fff;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f2f4f7;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>DevOps Observability 方案总结</h1>
+      <p class="lead">
+        这个项目是一个 Spring Boot 微服务链路：GatewayService 调用 OrderService，OrderService 调用 PaymentService，
+        PaymentService 再调用 BankService。它很适合用来学习现代 DevOps 里的 Observability：Tracing、Metrics、Logs
+        以及 Alerting 怎么组合起来。
+      </p>
+      <div>
+        <span class="tag">Distributed Tracing</span>
+        <span class="tag">Metrics</span>
+        <span class="tag">Logs</span>
+        <span class="tag">OpenTelemetry</span>
+        <span class="tag">Spring Boot Actuator</span>
+      </div>
+    </header>
+
+    <section class="section">
+      <h2>1. Observability 的三大核心</h2>
+      <p>Observability 通常可以拆成三类数据：</p>
+      <ul>
+        <li><strong>Traces</strong>：一次请求经过了哪些服务，每一步花了多久，哪里慢了或失败了。</li>
+        <li><strong>Metrics</strong>：系统整体状态，例如 QPS、错误率、响应时间、CPU、内存、JVM 指标。</li>
+        <li><strong>Logs</strong>：服务运行过程中打印的详细事件，适合排查具体错误上下文。</li>
+      </ul>
+      <p>
+        这三类数据并不是互相替代的关系。Tracing 适合看一次请求的路径，Metrics 适合看整体趋势和告警，
+        Logs 适合看具体错误原因。真实生产环境一般会三者一起使用。
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>2. Zipkin：应用直接上报 Trace</h2>
+      <p>
+        第一种方案是每个 microservice 在自己的 <code>application.yml</code> 里直接配置 Zipkin 地址。
+        应用启动后，Spring Boot、Micrometer Tracing 和相关 exporter 会把 span 直接发送给 Zipkin。
+      </p>
+      <pre><code>GatewayService  ----\
+OrderService     ----> Zipkin
+PaymentService  ----/
+BankService     ---/</code></pre>
+      <p>这种方案的优点是简单、直观，适合学习分布式链路追踪的基本概念：</p>
+      <ul>
+        <li><code>traceId</code> 表示一次完整调用链。</li>
+        <li><code>spanId</code> 表示调用链里的某一个步骤。</li>
+        <li><code>parentSpanId</code> 表示当前 span 的上游 span。</li>
+        <li>Zipkin UI 可以按 service、trace id 查询完整调用链。</li>
+      </ul>
+      <p>缺点是应用和后端绑定得比较紧。如果以后从 Zipkin 换成 Jaeger、Tempo 或云厂商平台，需要改每个服务的配置。</p>
+    </section>
+
+    <section class="section">
+      <h2>3. OpenTelemetry Collector：统一接收和分发</h2>
+      <p>
+        第二种方案是让所有 microservice 只连接 OpenTelemetry Collector。应用只需要把 trace/span 通过 OTLP
+        发送到 Collector，Collector 再负责转发到 Zipkin、Jaeger、Tempo 或其他平台。
+      </p>
+      <pre><code>Spring Boot services
+        |
+        | OTLP HTTP / OTLP gRPC
+        v
+OpenTelemetry Collector
+        |
+        +--> Zipkin
+        +--> Jaeger
+        +--> Tempo
+        +--> Cloud observability platform</code></pre>
+      <p>这个设计更接近企业里的常见做法，因为它把应用和可观测性后端解耦了。</p>
+
+      <h3>3.1 OTel + Zipkin</h3>
+      <p>
+        应用把 trace 发给 Collector，Collector 使用 Zipkin exporter 转发给 Zipkin。
+        Zipkin 继续负责存储和 UI 查询。
+      </p>
+      <pre><code>Microservice -> OTLP -> OpenTelemetry Collector -> Zipkin UI</code></pre>
+
+      <h3>3.2 OTel + Jaeger</h3>
+      <p>
+        Jaeger 是经典的分布式 tracing 系统，常用 all-in-one 镜像可以直接提供 Collector、Query 和 UI。
+        Jaeger UI 默认常见端口是 <code>16686</code>。
+      </p>
+      <pre><code>Microservice -> OTLP -> OpenTelemetry Collector -> Jaeger -> Jaeger UI</code></pre>
+      <p>Jaeger 适合学习 service、operation、trace 查询，也适合对比 Zipkin 和 Jaeger 两种 UI 的不同。</p>
+
+      <h3>3.3 OTel + Tempo + Grafana</h3>
+      <p>
+        Tempo 是 Grafana Labs 的 trace backend。Tempo 本身重点是接收、存储和查询 trace，不提供像 Zipkin
+        那样的独立完整 UI。通常需要通过 Grafana 查看 Tempo 里的 trace。
+      </p>
+      <pre><code>Microservice -> OTLP -> OpenTelemetry Collector -> Tempo -> Grafana UI</code></pre>
+      <p>
+        Tempo 的优势是和 Grafana 生态结合得很好，可以和 Prometheus metrics、Loki logs 在 Grafana 里做关联分析。
+      </p>
+
+      <h3>3.4 OTel 还能分发到哪些产品</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>类型</th>
+              <th>常见后端</th>
+              <th>说明</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>开源 Trace 后端</td>
+              <td>Zipkin、Jaeger、Grafana Tempo</td>
+              <td>适合本地学习、私有化部署和平台化建设。</td>
+            </tr>
+            <tr>
+              <td>商业 Observability 平台</td>
+              <td>Datadog、New Relic、Dynatrace、Honeycomb、Splunk Observability</td>
+              <td>通常提供 traces、metrics、logs、APM 和告警的一体化能力。</td>
+            </tr>
+            <tr>
+              <td>云厂商平台</td>
+              <td>AWS X-Ray、Google Cloud Trace、Azure Monitor</td>
+              <td>适合部署在对应云平台上的服务。</td>
+            </tr>
+            <tr>
+              <td>消息队列和中转层</td>
+              <td>Kafka</td>
+              <td>Collector 可以把 telemetry 数据先写入 Kafka，再由后续系统消费。</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>4. Prometheus：采集 Spring Boot Metrics</h2>
+      <p>
+        Prometheus 主要负责 metrics。Spring Boot 项目通常通过 Actuator 暴露健康检查和 metrics endpoint，
+        再由 Prometheus 定时 scrape。
+      </p>
+      <pre><code>Spring Boot Actuator /actuator/prometheus
+        ^
+        |
+Prometheus scrape</code></pre>
+      <p>常见配置思路：</p>
+      <ul>
+        <li>应用引入 <code>spring-boot-starter-actuator</code> 和 Prometheus registry 依赖。</li>
+        <li>打开 <code>/actuator/prometheus</code> endpoint。</li>
+        <li>Prometheus 配置 scrape target，例如 <code>localhost:8080</code>、<code>localhost:8081</code>。</li>
+        <li>Grafana 连接 Prometheus datasource，展示 JVM、HTTP latency、error rate 等 dashboard。</li>
+      </ul>
+      <p>
+        Prometheus 的定位不是查看单次请求的完整调用链，而是观察系统整体趋势。例如某个服务 5xx 错误率升高、
+        P95 latency 变慢、JVM memory 持续上涨。
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>5. Loki + Fluent Bit + Grafana：集中式日志</h2>
+      <p>
+        Loki 是 Grafana Labs 的日志存储和查询系统。Fluent Bit 是轻量级日志采集器。Grafana 是查询和展示 UI。
+        这套组合可以理解为日志方向的常见开源方案。
+      </p>
+      <pre><code>Spring Boot logs
+        |
+        v
+Fluent Bit
+        |
+        v
+Loki
+        |
+        v
+Grafana</code></pre>
+      <p>各组件作用：</p>
+      <ul>
+        <li><strong>Spring Boot logs</strong>：应用把日志输出到 console 或文件，日志里最好包含 <code>traceId</code> 和 <code>spanId</code>。</li>
+        <li><strong>Fluent Bit</strong>：负责采集容器日志或文件日志，解析、打标签，然后发送给 Loki。</li>
+        <li><strong>Loki</strong>：负责存储和查询日志。它更强调 label 查询，而不是像 Elasticsearch 那样全文索引所有字段。</li>
+        <li><strong>Grafana</strong>：连接 Loki datasource，用 LogQL 查询日志，也可以和 Tempo trace、Prometheus metrics 互相跳转。</li>
+      </ul>
+      <div class="note">
+        如果日志里带有 traceId，就可以从一次 trace 跳到相关日志，或者从错误日志反查 trace。这是 logs 和 traces 联动排障的关键。
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>6. 其他常见 DevOps 设计</h2>
+      <h3>6.1 Grafana + Alertmanager：监控告警</h3>
+      <p>
+        只收集 metrics 还不够，生产环境通常还需要告警。Prometheus 可以根据 PromQL 规则触发告警，
+        Alertmanager 负责分组、去重、静默和通知，例如发送到 Slack、Email、PagerDuty。
+      </p>
+      <pre><code>Prometheus rules -> Alertmanager -> Slack / Email / PagerDuty</code></pre>
+
+      <h3>6.2 Kubernetes Health Checks：服务自愈</h3>
+      <p>
+        Spring Boot Actuator 的 <code>/actuator/health</code> 可以和 Kubernetes readiness/liveness probe 配合。
+        readiness 用来判断服务是否可以接流量，liveness 用来判断服务是否需要重启。
+      </p>
+      <pre><code>Kubernetes probe -> /actuator/health -> restart or remove from traffic</code></pre>
+      <p>
+        这不是 tracing 工具，但它是微服务 DevOps 里非常常见的可靠性设计。
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>7. 推荐学习路线</h2>
+      <ol>
+        <li>先用 Zipkin 直接接 Spring Boot，理解 <code>traceId</code>、<code>spanId</code>、<code>parentSpanId</code>。</li>
+        <li>再引入 OpenTelemetry Collector，理解应用和后端解耦。</li>
+        <li>把 Collector 同时分发到 Zipkin 和 Jaeger，对比两个 UI。</li>
+        <li>进一步尝试 Tempo + Grafana，理解 Grafana 生态下 traces、metrics、logs 的关联。</li>
+        <li>最后接入 Prometheus 和 Loki，形成完整的 Observability 视角。</li>
+      </ol>
+      <p>最终比较完整的目标架构可以是：</p>
+      <pre><code>Spring Boot services
+        |
+        +--> traces  -> OpenTelemetry Collector -> Zipkin / Jaeger / Tempo
+        |
+        +--> metrics -> Actuator -> Prometheus -> Grafana
+        |
+        +--> logs    -> Fluent Bit -> Loki -> Grafana
+        |
+        +--> alerts  -> Prometheus rules -> Alertmanager</code></pre>
+    </section>
+  </main>
+</body>
+</html>

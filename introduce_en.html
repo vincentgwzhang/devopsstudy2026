@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DevOps Observability Repository Introduction</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f7f8fa;
+      --panel: #ffffff;
+      --text: #1f2937;
+      --muted: #667085;
+      --line: #d9dee7;
+      --accent: #0f766e;
+      --accent-soft: #e8f5f3;
+      --code: #101828;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      line-height: 1.72;
+    }
+
+    main {
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 40px 22px 64px;
+    }
+
+    header {
+      padding: 28px 0 26px;
+      border-bottom: 1px solid var(--line);
+      margin-bottom: 28px;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(30px, 5vw, 44px);
+      line-height: 1.18;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 34px 0 14px;
+      font-size: 25px;
+      line-height: 1.35;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      margin: 24px 0 10px;
+      font-size: 19px;
+      letter-spacing: 0;
+    }
+
+    p {
+      margin: 10px 0;
+    }
+
+    ul, ol {
+      padding-left: 24px;
+    }
+
+    li {
+      margin: 8px 0;
+    }
+
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+
+    code {
+      color: var(--code);
+      background: #eef2f6;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    pre {
+      overflow-x: auto;
+      background: #111827;
+      color: #f9fafb;
+      padding: 16px;
+      border-radius: 8px;
+      line-height: 1.55;
+    }
+
+    pre code {
+      padding: 0;
+      background: transparent;
+      color: inherit;
+    }
+
+    .lead {
+      max-width: 830px;
+      color: var(--muted);
+      font-size: 18px;
+    }
+
+    .section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 24px;
+      margin: 22px 0;
+    }
+
+    .tag {
+      display: inline-block;
+      margin-right: 8px;
+      margin-bottom: 8px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .note {
+      border-left: 4px solid var(--accent);
+      background: var(--accent-soft);
+      padding: 12px 14px;
+      margin: 16px 0;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 14px 0;
+      background: #fff;
+    }
+
+    th, td {
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      background: #f2f4f7;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>DevOps Observability Study Repository</h1>
+      <p class="lead">
+        This repository is a Spring Boot microservices study project focused on modern DevOps observability.
+        It demonstrates how a request flows through several services and how traces, metrics, logs, and alerts
+        can be collected and viewed with common open-source tools.
+      </p>
+      <div>
+        <span class="tag">Spring Boot</span>
+        <span class="tag">Microservices</span>
+        <span class="tag">Distributed Tracing</span>
+        <span class="tag">OpenTelemetry</span>
+        <span class="tag">Zipkin</span>
+        <span class="tag">Jaeger</span>
+      </div>
+    </header>
+
+    <section class="section">
+      <h2>1. What This Repository Demonstrates</h2>
+      <p>
+        The application is intentionally small, but it models a realistic service-to-service call chain:
+      </p>
+      <pre><code>Postman / Browser
+        |
+        v
+GatewayService
+        |
+        v
+OrderService
+        |
+        v
+PaymentService
+        |
+        v
+BankService</code></pre>
+      <p>
+        Each service is a separate Maven module. The services communicate through direct HTTP calls, and the
+        tracing setup shows how one incoming request becomes a full distributed trace across the whole chain.
+      </p>
+      <ul>
+        <li><strong>GatewayService</strong> receives the external request and routes it to OrderService.</li>
+        <li><strong>OrderService</strong> creates an order and calls PaymentService.</li>
+        <li><strong>PaymentService</strong> authorizes a payment and calls BankService.</li>
+        <li><strong>BankService</strong> simulates the final bank transfer settlement.</li>
+        <li><strong>CommonModule</strong> contains shared tracing helpers for MDC log enrichment.</li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>2. Observability Concepts</h2>
+      <p>
+        Observability is usually built from three major signal types:
+      </p>
+      <ul>
+        <li><strong>Traces</strong>: show the path of one request across multiple services.</li>
+        <li><strong>Metrics</strong>: show system-level trends such as latency, error rate, throughput, CPU, memory, and JVM behavior.</li>
+        <li><strong>Logs</strong>: provide detailed event-level information for debugging a specific failure or behavior.</li>
+      </ul>
+      <p>
+        In this project, tracing is the main focus, but the repository also provides a good base for learning
+        Prometheus metrics, centralized logging, dashboards, and alerting.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>3. Solution A: Direct Zipkin Export</h2>
+      <p>
+        The simplest tracing setup is to configure every microservice to export spans directly to Zipkin from
+        its own <code>application.yml</code>.
+      </p>
+      <pre><code>GatewayService  ----\
+OrderService     ----> Zipkin
+PaymentService  ----/
+BankService     ---/</code></pre>
+      <p>
+        With this setup, Zipkin receives spans from each service and reconstructs the full call graph by using
+        <code>traceId</code>, <code>spanId</code>, and <code>parentSpanId</code>.
+      </p>
+      <ul>
+        <li><code>traceId</code> identifies one complete distributed request.</li>
+        <li><code>spanId</code> identifies one operation inside that request.</li>
+        <li><code>parentSpanId</code> links one span to the upstream operation.</li>
+        <li>Zipkin UI can be used to search by service, operation, duration, or trace id.</li>
+      </ul>
+      <div class="note">
+        This approach is easy to understand and good for learning, but each application is coupled directly to the tracing backend.
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>4. Solution B: OpenTelemetry Collector Fan-Out</h2>
+      <p>
+        A more flexible architecture is to make every service export telemetry to the OpenTelemetry Collector.
+        The Collector then forwards traces to one or more backends.
+      </p>
+      <pre><code>Spring Boot services
+        |
+        | OTLP HTTP / OTLP gRPC
+        v
+OpenTelemetry Collector
+        |
+        +--> Zipkin
+        +--> Jaeger
+        +--> Tempo
+        +--> Commercial or cloud observability platforms</code></pre>
+      <p>
+        This is the key design idea: services only know the OTLP endpoint of the Collector. The backend choice
+        becomes infrastructure configuration instead of application code.
+      </p>
+
+      <h3>4.1 OpenTelemetry Collector + Zipkin</h3>
+      <p>
+        The Collector receives OTLP traces and exports them to Zipkin. Zipkin still provides the trace storage
+        and UI experience.
+      </p>
+      <pre><code>Microservice -> OTLP -> OpenTelemetry Collector -> Zipkin UI</code></pre>
+
+      <h3>4.2 OpenTelemetry Collector + Jaeger</h3>
+      <p>
+        Jaeger is a classic distributed tracing platform. The all-in-one image is convenient for local study
+        because it includes collection, query, storage, and UI components in one container.
+      </p>
+      <pre><code>Microservice -> OTLP -> OpenTelemetry Collector -> Jaeger -> Jaeger UI</code></pre>
+      <p>
+        A common local Jaeger UI endpoint is <code>http://localhost:16686</code>.
+      </p>
+
+      <h3>4.3 OpenTelemetry Collector + Tempo + Grafana</h3>
+      <p>
+        Grafana Tempo is a trace backend from Grafana Labs. Tempo itself is focused on storing and querying
+        traces; the UI is normally provided by Grafana.
+      </p>
+      <pre><code>Microservice -> OTLP -> OpenTelemetry Collector -> Tempo -> Grafana UI</code></pre>
+      <p>
+        This combination is useful when you want traces, Prometheus metrics, and Loki logs to be explored from
+        the same Grafana interface.
+      </p>
+
+      <h3>4.4 Other OpenTelemetry Targets</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Examples</th>
+              <th>Purpose</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Open-source trace backends</td>
+              <td>Zipkin, Jaeger, Grafana Tempo</td>
+              <td>Good for local learning, self-hosted environments, and platform engineering.</td>
+            </tr>
+            <tr>
+              <td>Commercial observability platforms</td>
+              <td>Datadog, New Relic, Dynatrace, Honeycomb, Splunk Observability</td>
+              <td>Provide managed APM, dashboards, traces, logs, metrics, and alerting.</td>
+            </tr>
+            <tr>
+              <td>Cloud-native tracing services</td>
+              <td>AWS X-Ray, Google Cloud Trace, Azure Monitor</td>
+              <td>Useful when the application is deployed on the corresponding cloud platform.</td>
+            </tr>
+            <tr>
+              <td>Streaming and buffering layer</td>
+              <td>Kafka</td>
+              <td>Telemetry can be written to Kafka first and consumed by downstream observability systems later.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>5. Metrics With Prometheus</h2>
+      <p>
+        Prometheus is commonly used for metrics. In a Spring Boot application, the usual path is to enable
+        Spring Boot Actuator and expose a Prometheus-compatible endpoint.
+      </p>
+      <pre><code>Spring Boot Actuator /actuator/prometheus
+        ^
+        |
+Prometheus scrape</code></pre>
+      <p>A typical setup includes:</p>
+      <ul>
+        <li>Add <code>spring-boot-starter-actuator</code> and the Micrometer Prometheus registry.</li>
+        <li>Expose <code>/actuator/prometheus</code>.</li>
+        <li>Configure Prometheus scrape targets for the services.</li>
+        <li>Use Grafana dashboards to visualize JVM, HTTP latency, request rate, and error rate metrics.</li>
+      </ul>
+      <p>
+        Prometheus is not meant to show the full path of one request. It is better for trends, SLOs, dashboards,
+        and alert conditions.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>6. Logs With Loki, Fluent Bit, and Grafana</h2>
+      <p>
+        A common open-source logging stack is Loki + Fluent Bit + Grafana.
+      </p>
+      <pre><code>Spring Boot logs
+        |
+        v
+Fluent Bit
+        |
+        v
+Loki
+        |
+        v
+Grafana</code></pre>
+      <ul>
+        <li><strong>Spring Boot logs</strong> should include useful context such as <code>traceId</code> and <code>spanId</code>.</li>
+        <li><strong>Fluent Bit</strong> collects container or file logs, adds labels, and forwards them to Loki.</li>
+        <li><strong>Loki</strong> stores and queries logs using labels and LogQL.</li>
+        <li><strong>Grafana</strong> provides the UI for querying logs and correlating them with metrics and traces.</li>
+      </ul>
+      <div class="note">
+        When logs contain trace ids, it becomes much easier to jump from a trace to related logs, or from an error log back to the trace.
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>7. Other Practical DevOps Designs</h2>
+      <h3>7.1 Alerting With Prometheus and Alertmanager</h3>
+      <p>
+        Metrics become more useful when they can trigger alerts. Prometheus evaluates alert rules, and
+        Alertmanager handles grouping, deduplication, silencing, and notification delivery.
+      </p>
+      <pre><code>Prometheus rules -> Alertmanager -> Slack / Email / PagerDuty</code></pre>
+
+      <h3>7.2 Health Checks for Kubernetes</h3>
+      <p>
+        Spring Boot Actuator health endpoints can be used with Kubernetes readiness and liveness probes.
+        Readiness decides whether a pod should receive traffic. Liveness decides whether a pod should be restarted.
+      </p>
+      <pre><code>Kubernetes probe -> /actuator/health -> route traffic or restart pod</code></pre>
+    </section>
+
+    <section class="section">
+      <h2>8. Recommended Learning Path</h2>
+      <ol>
+        <li>Start with direct Zipkin export to understand <code>traceId</code>, <code>spanId</code>, and parent-child span relationships.</li>
+        <li>Add the OpenTelemetry Collector and move applications to OTLP export.</li>
+        <li>Fan out traces from the Collector to Zipkin and Jaeger, then compare their UIs.</li>
+        <li>Try Tempo with Grafana to understand the Grafana observability ecosystem.</li>
+        <li>Add Prometheus for metrics and Loki for logs to complete the observability picture.</li>
+      </ol>
+      <p>A mature local architecture can look like this:</p>
+      <pre><code>Spring Boot services
+        |
+        +--> traces  -> OpenTelemetry Collector -> Zipkin / Jaeger / Tempo
+        |
+        +--> metrics -> Actuator -> Prometheus -> Grafana
+        |
+        +--> logs    -> Fluent Bit -> Loki -> Grafana
+        |
+        +--> alerts  -> Prometheus rules -> Alertmanager</code></pre>
+    </section>
+  </main>
+</body>
+</html>
