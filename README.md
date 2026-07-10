@@ -146,3 +146,17 @@ gatewayservice
 这个 branch 的重点是：通过 Spring Boot 配置连接 Zipkin，而不是在业务代码里手动创建 Zipkin exporter。
 
 换句话说，Zipkin 是可替换的观测后端。业务代码只负责正常处理请求，tracing export 由 Spring Boot / Micrometer Tracing / OpenTelemetry 相关依赖和 `application.yml` 配置完成。
+
+
+```txt
+总结:
+
+GatewayService 收到没有 tracing header 的外部请求时，Spring Boot/Micrometer 创建新的 traceId 和 root spanId；之后 Gateway、Order、Payment 通过被 ObservationRegistry instrument 的 HTTP 客户端把 trace context 放进请求头传给下游；每个服务收到请求后继续使用同一个 traceId，生成自己的 spanId，并记录 parentId，最后这些 span 被导出到 Zipkin，Zipkin 根据 traceId + spanId + parentId 还原出完整调用链。
+
+从 Gateway 出来后， OrderService - PaymentService - BankService 获得的 request header 都有一个
+key = traceparent 的信息，value = 类似 00-df347570f74bc2094ff61917d965d6b3-a3d92b7b94147640-03
+其中 00 是 traceparent 协议版本号。
+df347570f74bc2094ff61917d965d6b3 = trace_id （所以链里面所有的 trace_id 都一样）
+a3d92b7b94147640 = Parant id 就是上一个链里面的 span id
+03 其实是二进制的 11, 第一个 1 代表 sampled, 第二个 1 代表 random trace id
+```

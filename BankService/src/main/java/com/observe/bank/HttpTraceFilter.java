@@ -30,7 +30,8 @@ class HttpTraceFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         try {
             MdcSupport.enrichFromTracer(tracerProvider.getIfAvailable());
-            log.info("BankService received a calling");
+            // traceparent 是 W3C Trace Context 标准里的 HTTP header，用来把分布式链路追踪上下文从上游服务传给下游服务。
+            log.info("Bank service received hedaer = {}, value = {}", "traceparent", request.getHeader("traceparent"));
             filterChain.doFilter(request, response);
         } finally {
             MdcSupport.clear();
