@@ -1,5 +1,6 @@
 package com.observe.order;
 
+import com.observe.common.tracing.ObservabilityDemoRunner;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -12,6 +13,11 @@ public class OrderServiceApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(OrderServiceApplication.class, args);
+    }
+
+    @Bean
+    ObservabilityDemoRunner observabilityDemoRunner() {
+        return new ObservabilityDemoRunner("OrderService");
     }
 
     @Bean

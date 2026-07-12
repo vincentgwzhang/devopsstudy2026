@@ -1,0 +1,46 @@
+setup.kibana:
+  host: "http://kibana:5601"
+
+setup.dashboards.enabled: true
+setup.dashboards.index: "devopsstudy-metricbeat-*"
+setup.ilm.enabled: false
+setup.template.name: "devopsstudy-metricbeat"
+setup.template.pattern: "devopsstudy-metricbeat-*"
+setup.template.overwrite: true
+
+metricbeat.modules:
+  - module: system
+    period: 10s
+    metricsets:
+      - cpu
+      - load
+      - memory
+      - network
+      - process
+      - process_summary
+    processes: ['.*']
+    process.include_top_n:
+      by_cpu: 5
+      by_memory: 5
+
+  - module: docker
+    period: 10s
+    hosts: ["unix:///var/run/docker.sock"]
+    metricsets:
+      - container
+      - cpu
+      - diskio
+      - event
+      - healthcheck
+      - info
+      - memory
+      - network
+
+processors:
+  - add_host_metadata: ~
+  - add_docker_metadata:
+      host: "unix:///var/run/docker.sock"
+
+output.elasticsearch:
+  hosts: ["http://elasticsearch:9200"]
+  index: "devopsstudy-metricbeat-%{+yyyy.MM.dd}"

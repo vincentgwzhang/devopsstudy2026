@@ -1,5 +1,6 @@
 package com.observe.payment;
 
+import com.observe.common.tracing.ObservabilityDemoRunner;
 import io.micrometer.observation.ObservationRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -12,6 +13,11 @@ public class PaymentServiceApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(PaymentServiceApplication.class, args);
+    }
+
+    @Bean
+    ObservabilityDemoRunner observabilityDemoRunner() {
+        return new ObservabilityDemoRunner("PaymentService");
     }
 
     @Bean

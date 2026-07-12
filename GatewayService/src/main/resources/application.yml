@@ -22,6 +22,13 @@ logging:
     com.observe.gateway: INFO
 
 management:
+  endpoints:
+    web:
+      exposure:
+        include: health,shutdown
+  endpoint:
+    shutdown:
+      access: unrestricted
   tracing:
     sampling:
       probability: 1.0

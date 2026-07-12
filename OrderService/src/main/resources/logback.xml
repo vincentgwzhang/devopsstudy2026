@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
+    <property name="SERVICE_NAME" value="OrderService"/>
+    <property name="LOGSTASH_HOST" value="${LOGSTASH_HOST:-localhost}"/>
+    <property name="LOGSTASH_PORT" value="${LOGSTASH_PORT:-5000}"/>
     <property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [traceId=%X{traceId:--} spanId=%X{spanId:--} parentSpanId=%X{parentSpanId:--}] %logger{36} - %msg%n"/>
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
@@ -9,8 +12,23 @@
         </encoder>
     </appender>
 
+    <appender name="LOGSTASH" class="net.logstash.logback.appender.LogstashTcpSocketAppender">
+        <destination>${LOGSTASH_HOST}:${LOGSTASH_PORT}</destination>
+        <reconnectionDelay>60 seconds</reconnectionDelay>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"application":"devopsstudy","service_name":"${SERVICE_NAME}","log_type":"application"}</customFields>
+            <includeMdc>true</includeMdc>
+        </encoder>
+    </appender>
+
     <logger name="com.observe.order" level="INFO" additivity="false">
         <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="LOGSTASH"/>
+    </logger>
+
+    <logger name="com.observe.metrics" level="INFO" additivity="false">
+        <appender-ref ref="CONSOLE"/>
+        <appender-ref ref="LOGSTASH"/>
     </logger>
 
     <logger name="org.springframework" level="WARN"/>

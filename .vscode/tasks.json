@@ -2,9 +2,9 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "zipkin: up",
+            "label": "setup: elk",
             "type": "shell",
-            "command": "docker compose -f support/zipkin.yaml up -d",
+            "command": "${workspaceFolder}/support/setup.sh",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
@@ -18,23 +18,35 @@
             }
         },
         {
-            "label": "verify: full service chain",
+            "label": "post-setup: verify",
             "type": "shell",
-            "command": "${workspaceFolder}/support/verify-chain.sh",
+            "command": "${workspaceFolder}/support/post-setup.sh",
             "options": {
                 "cwd": "${workspaceFolder}"
             },
             "problemMatcher": [],
-            "group": {
-                "kind": "test",
-                "isDefault": true
-            },
             "presentation": {
                 "echo": true,
                 "reveal": "always",
                 "focus": true,
                 "panel": "dedicated",
                 "clear": true
+            }
+        },
+        {
+            "label": "uninstall: elk",
+            "type": "shell",
+            "command": "${workspaceFolder}/support/uninstall.sh",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "dedicated",
+                "clear": false
             }
         }
     ]
