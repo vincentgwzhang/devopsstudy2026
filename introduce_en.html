@@ -172,6 +172,7 @@
         <span class="tag">OpenTelemetry</span>
         <span class="tag">Zipkin</span>
         <span class="tag">Jaeger</span>
+        <span class="tag">ELK</span>
       </div>
     </header>
 
@@ -382,15 +383,60 @@ Grafana</code></pre>
     </section>
 
     <section class="section">
-      <h2>7. Other Practical DevOps Designs</h2>
-      <h3>7.1 Alerting With Prometheus and Alertmanager</h3>
+      <h2>7. Logs With ELK</h2>
+      <p>
+        ELK stands for Elasticsearch, Logstash, and Kibana. It is one of the classic centralized logging
+        architectures and is still useful for learning log ingestion, indexing, field search, and dashboards.
+      </p>
+      <pre><code>Spring Boot services
+        |
+        | JSON logs / TCP appender
+        v
+Logstash
+        |
+        v
+Elasticsearch
+        |
+        v
+Kibana</code></pre>
+      <p>
+        In a local study branch, Spring Boot can send structured JSON logs directly to Logstash through a
+        Logback appender.
+      </p>
+      <ul>
+        <li><strong>Logback</strong> emits fields such as <code>service_name</code>, <code>traceId</code>, <code>spanId</code>, and demo metric fields.</li>
+        <li><strong>Logstash</strong> receives JSON events and writes them into service-specific or signal-specific Elasticsearch indices.</li>
+        <li><strong>Elasticsearch</strong> indexes and stores application logs and simple metric documents.</li>
+        <li><strong>Kibana</strong> uses Data Views such as <code>devopsstudy-logs-*</code>, <code>devopsstudy-metrics-*</code>, and <code>devopsstudy-metricbeat-*</code>.</li>
+      </ul>
+      <p>
+        ELK is strong when you need rich search across fields, keywords, time ranges, service names, and trace ids.
+        Typical Kibana Discover queries can look like this:
+      </p>
+      <pre><code>service_name: "PaymentService"
+traceId: *
+event_dataset: "demo.metrics" and metric_type: "gauge"</code></pre>
+      <div class="note">
+        The main tradeoff of ELK is cost and operational complexity. Heavy indexing is powerful, but at scale
+        teams must manage shards, index lifecycle policies, disk watermarks, mappings, upgrades, access control,
+        and data masking.
+      </div>
+      <p>
+        Compared with Loki, ELK focuses more on full-text search and rich field queries. Loki focuses more on
+        low-cost label-based log storage and tight integration with the Grafana ecosystem.
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>8. Other Practical DevOps Designs</h2>
+      <h3>8.1 Alerting With Prometheus and Alertmanager</h3>
       <p>
         Metrics become more useful when they can trigger alerts. Prometheus evaluates alert rules, and
         Alertmanager handles grouping, deduplication, silencing, and notification delivery.
       </p>
       <pre><code>Prometheus rules -> Alertmanager -> Slack / Email / PagerDuty</code></pre>
 
-      <h3>7.2 Health Checks for Kubernetes</h3>
+      <h3>8.2 Health Checks for Kubernetes</h3>
       <p>
         Spring Boot Actuator health endpoints can be used with Kubernetes readiness and liveness probes.
         Readiness decides whether a pod should receive traffic. Liveness decides whether a pod should be restarted.
@@ -399,13 +445,14 @@ Grafana</code></pre>
     </section>
 
     <section class="section">
-      <h2>8. Recommended Learning Path</h2>
+      <h2>9. Recommended Learning Path</h2>
       <ol>
         <li>Start with direct Zipkin export to understand <code>traceId</code>, <code>spanId</code>, and parent-child span relationships.</li>
         <li>Add the OpenTelemetry Collector and move applications to OTLP export.</li>
         <li>Fan out traces from the Collector to Zipkin and Jaeger, then compare their UIs.</li>
         <li>Try Tempo with Grafana to understand the Grafana observability ecosystem.</li>
-        <li>Add Prometheus for metrics and Loki for logs to complete the observability picture.</li>
+        <li>Add Prometheus for metrics and dashboards.</li>
+        <li>Try both ELK and Loki to compare traditional full-text log search with Grafana-native log exploration.</li>
       </ol>
       <p>A mature local architecture can look like this:</p>
       <pre><code>Spring Boot services
@@ -413,6 +460,8 @@ Grafana</code></pre>
         +--> traces  -> OpenTelemetry Collector -> Zipkin / Jaeger / Tempo
         |
         +--> metrics -> Actuator -> Prometheus -> Grafana
+        |
+        +--> logs    -> Logstash -> Elasticsearch -> Kibana
         |
         +--> logs    -> Fluent Bit -> Loki -> Grafana
         |

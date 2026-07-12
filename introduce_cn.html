@@ -170,6 +170,7 @@
         <span class="tag">Metrics</span>
         <span class="tag">Logs</span>
         <span class="tag">OpenTelemetry</span>
+        <span class="tag">ELK</span>
         <span class="tag">Spring Boot Actuator</span>
       </div>
     </header>
@@ -339,15 +340,56 @@ Grafana</code></pre>
     </section>
 
     <section class="section">
-      <h2>6. 其他常见 DevOps 设计</h2>
-      <h3>6.1 Grafana + Alertmanager：监控告警</h3>
+      <h2>6. ELK：传统集中式日志和搜索</h2>
+      <p>
+        ELK 指 Elasticsearch、Logstash、Kibana。它是非常经典的集中式日志方案，尤其适合学习日志采集、
+        索引、搜索、字段过滤和 dashboard 的完整流程。
+      </p>
+      <pre><code>Spring Boot services
+        |
+        | JSON logs / TCP appender
+        v
+Logstash
+        |
+        v
+Elasticsearch
+        |
+        v
+Kibana</code></pre>
+      <p>在本地学习分支里，可以让 Spring Boot 通过 Logback JSON appender 把日志直接发给 Logstash：</p>
+      <ul>
+        <li><strong>Logback</strong>：在日志里写入 <code>service_name</code>、<code>traceId</code>、<code>spanId</code>、<code>metric_name</code> 等结构化字段。</li>
+        <li><strong>Logstash</strong>：接收 JSON 日志，按日志类型或服务名写入不同 Elasticsearch index。</li>
+        <li><strong>Elasticsearch</strong>：负责索引、存储和查询日志，也可以存放教学用 metrics 文档。</li>
+        <li><strong>Kibana</strong>：通过 Data View 查看 <code>devopsstudy-logs-*</code>、<code>devopsstudy-metrics-*</code>、<code>devopsstudy-metricbeat-*</code>。</li>
+      </ul>
+      <p>
+        ELK 的优势是搜索能力很强，适合按字段、关键字、时间范围、服务名和 trace id 排查问题。
+        例如可以在 Kibana Discover 里查询：
+      </p>
+      <pre><code>service_name: "PaymentService"
+traceId: *
+event_dataset: "demo.metrics" and metric_type: "gauge"</code></pre>
+      <div class="note">
+        ELK 的主要 tradeoff 是成本和运维复杂度。Elasticsearch 对日志做大量索引，数据量变大后需要关注 shard、
+        index lifecycle、磁盘水位、mapping 管理和集群升级。生产环境通常会搭配 ILM、冷热分层、权限控制和脱敏策略。
+      </div>
+      <p>
+        和 Loki 相比，ELK 更强调全文搜索和复杂字段查询；Loki 更强调低成本、label 查询和 Grafana 生态联动。
+        两者都常见，选择取决于日志量、查询需求、团队运维能力和成本模型。
+      </p>
+    </section>
+
+    <section class="section">
+      <h2>7. 其他常见 DevOps 设计</h2>
+      <h3>7.1 Grafana + Alertmanager：监控告警</h3>
       <p>
         只收集 metrics 还不够，生产环境通常还需要告警。Prometheus 可以根据 PromQL 规则触发告警，
         Alertmanager 负责分组、去重、静默和通知，例如发送到 Slack、Email、PagerDuty。
       </p>
       <pre><code>Prometheus rules -> Alertmanager -> Slack / Email / PagerDuty</code></pre>
 
-      <h3>6.2 Kubernetes Health Checks：服务自愈</h3>
+      <h3>7.2 Kubernetes Health Checks：服务自愈</h3>
       <p>
         Spring Boot Actuator 的 <code>/actuator/health</code> 可以和 Kubernetes readiness/liveness probe 配合。
         readiness 用来判断服务是否可以接流量，liveness 用来判断服务是否需要重启。
@@ -359,13 +401,14 @@ Grafana</code></pre>
     </section>
 
     <section class="section">
-      <h2>7. 推荐学习路线</h2>
+      <h2>8. 推荐学习路线</h2>
       <ol>
         <li>先用 Zipkin 直接接 Spring Boot，理解 <code>traceId</code>、<code>spanId</code>、<code>parentSpanId</code>。</li>
         <li>再引入 OpenTelemetry Collector，理解应用和后端解耦。</li>
         <li>把 Collector 同时分发到 Zipkin 和 Jaeger，对比两个 UI。</li>
         <li>进一步尝试 Tempo + Grafana，理解 Grafana 生态下 traces、metrics、logs 的关联。</li>
-        <li>最后接入 Prometheus 和 Loki，形成完整的 Observability 视角。</li>
+        <li>接入 Prometheus 学习 metrics 和 dashboard。</li>
+        <li>分别尝试 ELK 和 Loki，比较传统全文搜索日志方案与 Grafana 生态日志方案的取舍。</li>
       </ol>
       <p>最终比较完整的目标架构可以是：</p>
       <pre><code>Spring Boot services
@@ -373,6 +416,8 @@ Grafana</code></pre>
         +--> traces  -> OpenTelemetry Collector -> Zipkin / Jaeger / Tempo
         |
         +--> metrics -> Actuator -> Prometheus -> Grafana
+        |
+        +--> logs    -> Logstash -> Elasticsearch -> Kibana
         |
         +--> logs    -> Fluent Bit -> Loki -> Grafana
         |
